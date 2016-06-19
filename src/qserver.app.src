@@ -1,0 +1,13 @@
+{application, qserver,
+ [{description, "An application for TCP protocol that uses qlib library application."},
+  {vsn, "0.1.0"},
+  {registered, []},
+  {mod, { qserver_app, []}},
+  {applications,
+   [kernel,
+    stdlib,
+    crypto
+   ]},
+  {env,[{ranch_port, 8081}]},
+  {modules, []}
+ ]}.

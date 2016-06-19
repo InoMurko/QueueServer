@@ -1,0 +1,13 @@
+{application, qlib,
+ [{description, "A library for FIFO queue"},
+  {vsn, "0.1.0"},
+  {registered, []},
+  {applications,
+   [kernel,
+    stdlib,
+    mnesia
+   ]},
+   {mod,{qlib_app,[]}},
+  {env, 
+    []}
+ ]}.
