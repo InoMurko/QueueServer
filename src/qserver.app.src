@@ -8,6 +8,6 @@
     stdlib,
     crypto
    ]},
-  {env,[{ranch_port, 8081}]},
+  {env,[{port, 8081}, {break, "\r\n"}]},
   {modules, []}
  ]}.

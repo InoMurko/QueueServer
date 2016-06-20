@@ -31,7 +31,7 @@ cleanup(_) ->
 publish_and_ret() ->
 	SomeHostInNet = "localhost", 
     {ok, Socket} = gen_tcp:connect(SomeHostInNet, 8081, [list, {active, once}]),
-    Data = "in" ++ "TEST1" ++ "\r\n" ++ "out" ++ "\r\n" ++ "in" ++"TEST2" ++ "\r\n" ++ "out" ++ "\r\n",
+    Data = "in" ++ "TEST1" ++ "\r\n" ++ "in" ++ "TEST9" ++ "\r\n" ++ "out" ++ "\r\n" ++ "in" ++"TEST2" ++ "\r\n" ++ "out" ++ "\r\n" ++ "out" ++ "\r\n",
     ok = gen_tcp:send(Socket, Data),
     inet:setopts(Socket, [{active, false}, {packet, line}]),
     response(Socket),
@@ -46,7 +46,10 @@ response(Socket, Index) ->
         {{ok, "TEST1" ++ _NL = Data}, 0} ->
         	?assertEqual("TEST1\r\n", Data),
             response(Socket, 1);
-        {{ok, "TEST2" ++ _NL = Data}, 1} ->
+        {{ok, "TEST9" ++ _NL = Data}, 1} ->
+        	?assertEqual("TEST9\r\n", Data),
+            response(Socket, 2);
+        {{ok, "TEST2" ++ _NL = Data}, 2} ->
         	?assertEqual("TEST2\r\n", Data);
         _Reason -> 
         	?assertEqual(0, _Reason)
