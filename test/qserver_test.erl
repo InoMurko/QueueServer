@@ -29,7 +29,7 @@ cleanup(_) ->
 	ok.
 
 publish_and_ret_many() ->
-	NumberOfAnswersWaiting = 10,
+	NumberOfAnswersWaiting = 25,
 	Pid = self(),
 	[ spawn(?MODULE, publish_and_ret, [Pid]) || _I <- lists:seq(1, NumberOfAnswersWaiting)],
 	recv(NumberOfAnswersWaiting).

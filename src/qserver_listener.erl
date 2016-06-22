@@ -37,7 +37,8 @@ handle_call(_Msg, _From, State) ->
     {reply, ok, State}.
 
 handle_cast({start, Port}, State) ->
-    ListenOpts = [{packet, line}, {active, false}, {reuseaddr, true}],
+    ListenOpts = [{packet, line}, {active, false}, {reuseaddr, true},
+    {backlog, 1024}, {nodelay, true}, {send_timeout, 30000}, {send_timeout_close, true}],
     ListenOpts2 = lists:append(ListenOpts,[{ip, {0,0,0,0}}]),
     %listening on port 
     {ok, LSocket} = gen_tcp:listen(Port, ListenOpts2),
