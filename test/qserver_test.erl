@@ -9,7 +9,7 @@ publish_test_() ->
 	fun setup/0,
 	fun cleanup/1,
 		[
-		{"Connect and send commands and analyze response.", fun publish_and_ret/0 },
+		{"Connect and send commands and analyze response.", fun publish_and_ret_many/0 },
 		{"Fifo test", fun fifo/0}
 		]
 
@@ -28,28 +28,51 @@ cleanup(_) ->
 	application:stop(qserver),
 	ok.
 
-publish_and_ret() ->
+publish_and_ret_many() ->
+	NumberOfAnswersWaiting = 10,
+	Pid = self(),
+	[ spawn(?MODULE, publish_and_ret, [Pid]) || _I <- lists:seq(1, NumberOfAnswersWaiting)],
+	recv(NumberOfAnswersWaiting).
+
+recv(NumberOfAnswersWaiting) ->
+	recv(1, NumberOfAnswersWaiting).
+recv(Index, NumberOfAnswersWaiting) ->
+receive 
+	done ->
+		if 
+			Index =:= NumberOfAnswersWaiting ->
+				done;
+			true -> 
+				recv(Index + 1, NumberOfAnswersWaiting)
+		end
+	after 5000 ->
+		?assertEqual(0, timeout)
+end.
+
+publish_and_ret(Pid) ->
 	SomeHostInNet = "localhost", 
     {ok, Socket} = gen_tcp:connect(SomeHostInNet, 8081, [list, {active, once}]),
-    Data = "in" ++ "TEST1" ++ "\r\n" ++ "out" ++ "\r\n" ++ "in" ++"TEST2" ++ "\r\n" ++ "out" ++ "\r\n",
+    Data = "in" ++ "TEST1" ++ "\r\n" ++ "in" ++ "TEST9" ++ "\r\n" ++ "out" ++ "\r\n" ++ "in" ++"TEST2" ++ "\r\n" ++ "out" ++ "\r\n" ++ "out" ++ "\r\n",
     ok = gen_tcp:send(Socket, Data),
     inet:setopts(Socket, [{active, false}, {packet, line}]),
-    response(Socket),
-	ok = gen_tcp:close(Socket),
-    timer:sleep(1000),%stopping the application to soon makes ranch gen_server crash because it doesn't have enough time to destroy his queue
-    ?assertEqual([], ets:tab2list(qlib_queue)).
+    response(Socket, Pid),
+	ok = gen_tcp:close(Socket).
 
-response(Socket) ->
-    response(Socket, 0).
-response(Socket, Index) ->
+response(Socket, Pid) ->
+    response(Socket, Pid, 0).
+response(Socket, Pid, Index) ->
     case {gen_tcp:recv(Socket, 0), Index} of
         {{ok, "TEST1" ++ _NL = Data}, 0} ->
         	?assertEqual("TEST1\r\n", Data),
-            response(Socket, 1);
-        {{ok, "TEST2" ++ _NL = Data}, 1} ->
-        	?assertEqual("TEST2\r\n", Data);
+            response(Socket, Pid, 1);
+        {{ok, "TEST9" ++ _NL = Data}, 1} ->
+        	?assertEqual("TEST9\r\n", Data),
+            response(Socket, Pid, 2);
+        {{ok, "TEST2" ++ _NL = Data}, 2} ->
+        	?assertEqual("TEST2\r\n", Data),
+        	Pid ! done;
         _Reason -> 
-        	?assertEqual(0, _Reason)
+        	?assertEqual(0, {_Reason, self()})
     end.
 
 fifo() ->
