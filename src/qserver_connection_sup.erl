@@ -25,5 +25,5 @@ init([]) ->
 %% the child specification.
 %% @end
 start_child(Socket) ->
-    supervisor:start_child(?MODULE, [Socket]),
+    supervisor:start_child(?MODULE, [Socket]).
     
